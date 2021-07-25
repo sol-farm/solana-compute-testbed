@@ -20,6 +20,8 @@ pub fn process_instruction(
         6 => for_loop_no_iter_ref_complex_type_assign(),
         7 => for_loop_no_iter_ref_assign_simple_type(),
         8 => for_loop_iter_ref_assign_simple_type(),
+        9 => pass_pubkey_no_ref(&accounts[0]),
+        10 => pass_pubkey_ref(&accounts[0]),
         _ => (),
     };
     Ok(())
@@ -102,6 +104,25 @@ fn for_loop_no_iter_ref_complex_type_assign() {
     }
 }
 
+fn pass_pubkey_no_ref(acct: &AccountInfo) {
+    pubkey_pass_no_ref(*acct.key)
+}
+
+fn pass_pubkey_ref(acct: &AccountInfo) {
+    pubkey_pass_ref(acct.key)
+}
+
+
+fn pubkey_pass_no_ref(key: Pubkey) {
+    let a = key;
+    assert!(a != Pubkey::default());
+}
+
+
+fn pubkey_pass_ref(key: &Pubkey) {
+    let a = key;
+    assert!(a != &Pubkey::default());
+}
 
 #[cfg(test)] 
 mod test {
@@ -326,6 +347,54 @@ mod test {
                 program_id,
                 accounts: vec![AccountMeta::new(payer.pubkey(), false)],
                 data: vec![8],
+            }],
+            Some(&payer.pubkey()),
+        );
+        transaction.sign(&[&payer], recent_blockhash);
+        assert_matches!(banks_client.process_transaction(transaction).await, Ok(()));
+    }
+
+    #[tokio::test]
+    async fn test_pubkey_argument_pass_no_ref() {
+        let program_id = Pubkey::new_unique();
+        println!("pubkey argument pass no ref program id test {}", program_id);
+        let pt = ProgramTest::new(
+            "bpf_program_template",
+            program_id,
+            processor!(process_instruction),
+        );
+    
+        let (mut banks_client, payer, recent_blockhash) = pt.start().await;
+    
+        let mut transaction = Transaction::new_with_payer(
+            &[Instruction {
+                program_id,
+                accounts: vec![AccountMeta::new(payer.pubkey(), false)],
+                data: vec![9],
+            }],
+            Some(&payer.pubkey()),
+        );
+        transaction.sign(&[&payer], recent_blockhash);
+        assert_matches!(banks_client.process_transaction(transaction).await, Ok(()));
+    }
+
+    #[tokio::test]
+    async fn test_pubkey_argument_pass_ref() {
+        let program_id = Pubkey::new_unique();
+        println!("pubkey argument pass ref program id test {}", program_id);
+        let pt = ProgramTest::new(
+            "bpf_program_template",
+            program_id,
+            processor!(process_instruction),
+        );
+    
+        let (mut banks_client, payer, recent_blockhash) = pt.start().await;
+    
+        let mut transaction = Transaction::new_with_payer(
+            &[Instruction {
+                program_id,
+                accounts: vec![AccountMeta::new(payer.pubkey(), false)],
+                data: vec![10],
             }],
             Some(&payer.pubkey()),
         );
