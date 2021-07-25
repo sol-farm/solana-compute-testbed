@@ -22,6 +22,8 @@ pub fn process_instruction(
         8 => for_loop_iter_ref_assign_simple_type(),
         9 => pass_pubkey_no_ref(&accounts[0]),
         10 => pass_pubkey_ref(&accounts[0]),
+        11 => pubkey_default_multicall(&accounts[0]),
+        12 => pubkey_default_variable(&accounts[0]),
         _ => (),
     };
     Ok(())
@@ -112,6 +114,17 @@ fn pass_pubkey_ref(acct: &AccountInfo) {
     pubkey_pass_ref(acct.key)
 }
 
+
+fn pubkey_default_multicall(acct: &AccountInfo) {
+    assert!(acct.key != &Pubkey::default());
+    assert!(acct.key != &Pubkey::default());
+}
+
+fn pubkey_default_variable(acct: &AccountInfo) {
+    let default_key = Pubkey::default();
+    assert!(acct.key != &default_key);
+    assert!(acct.key != &default_key);
+}
 
 fn pubkey_pass_no_ref(key: Pubkey) {
     let a = key;
@@ -395,6 +408,52 @@ mod test {
                 program_id,
                 accounts: vec![AccountMeta::new(payer.pubkey(), false)],
                 data: vec![10],
+            }],
+            Some(&payer.pubkey()),
+        );
+        transaction.sign(&[&payer], recent_blockhash);
+        assert_matches!(banks_client.process_transaction(transaction).await, Ok(()));
+    }
+    #[tokio::test]
+    async fn test_pubkey_default_multicall() {
+        let program_id = Pubkey::new_unique();
+        println!("pubkey default multicall program id test {}", program_id);
+        let pt = ProgramTest::new(
+            "bpf_program_template",
+            program_id,
+            processor!(process_instruction),
+        );
+    
+        let (mut banks_client, payer, recent_blockhash) = pt.start().await;
+    
+        let mut transaction = Transaction::new_with_payer(
+            &[Instruction {
+                program_id,
+                accounts: vec![AccountMeta::new(payer.pubkey(), false)],
+                data: vec![11],
+            }],
+            Some(&payer.pubkey()),
+        );
+        transaction.sign(&[&payer], recent_blockhash);
+        assert_matches!(banks_client.process_transaction(transaction).await, Ok(()));
+    }
+    #[tokio::test]
+    async fn test_pubkey_default_variable() {
+        let program_id = Pubkey::new_unique();
+        println!("pubkey default variable program id test {}", program_id);
+        let pt = ProgramTest::new(
+            "bpf_program_template",
+            program_id,
+            processor!(process_instruction),
+        );
+    
+        let (mut banks_client, payer, recent_blockhash) = pt.start().await;
+    
+        let mut transaction = Transaction::new_with_payer(
+            &[Instruction {
+                program_id,
+                accounts: vec![AccountMeta::new(payer.pubkey(), false)],
+                data: vec![12],
             }],
             Some(&payer.pubkey()),
         );
