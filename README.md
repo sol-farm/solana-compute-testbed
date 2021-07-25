@@ -20,7 +20,7 @@ If you have a function that requires taking a public key as an argument, it is c
 
 ## Comparing Against `Pubkey::default()`
 
-If you need to compare against `Pubkey::default()` more than once within the same function body, it is cheaper to store the results of `Pubkey::default()` into a variable, and compare against that variable then it is to compare against `Pubkey::default()`
+If you need to compare against `Pubkey::default()` more than once within the same function body, it is cheaper to store the results of `Pubkey::default()` into a variable, and compare against that variable then it is to compare against `Pubkey::default()`. Using the variable saves around 8 compute units.
 
 Cheaper:
 
