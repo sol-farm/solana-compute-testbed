@@ -4,6 +4,8 @@ test environment for measuring compute units of various actions and tips based o
 
 # Results
 
+For the time being these tests are rather simplistic so YMMV when used in actual production code.
+
 ## Working With Vectors
 
 * Initialize your type with the `vec![]` macro, it's the cheapest option available
